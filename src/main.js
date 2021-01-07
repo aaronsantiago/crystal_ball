@@ -180,19 +180,20 @@ function getSensitivity() {
 function updateVideo() {
   if (v0.paused) {
     v0.play();
-  console.log("yea");
   }
   if (v1.paused) {
     v1.play();
-    console.log("yea");
   }
 
   let currentTime = Date.now();
   let dt = (currentTime - previousTime) / 1000;
   previousTime = currentTime;
 
-  if (v0.currentTime - v1.currentTime > .05 && v0.currentTime > .1 && v1.currentTime > .1) {
-    v1.currentTime = v0.currentTime;
+  let videoDelta = Math.abs(v1.currentTime - v0.currentTime);
+  if (videoDelta > 1.5 && videoDelta < v0.duration/2) {
+    v0.currentTime = 0;
+    v1.currentTime = 0;
+    console.log("large desync detected, restarting videos")
   }
   if (typeof dets !== 'undefined') {
     // if (dets.length > 0) {
