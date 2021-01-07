@@ -1,3 +1,5 @@
+navigator.mediaDevices.getUserMedia({video:true});
+
 var gui = new dat.GUI({
     name: 'options'
   });
