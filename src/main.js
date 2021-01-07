@@ -1,18 +1,29 @@
-navigator.mediaDevices.getUserMedia({video:true});
+
+navigator.mediaDevices.getUserMedia({
+  video: true
+});
 
 var gui = new dat.GUI({
     name: 'options'
   });
 
+let minSensitivityDecreasePresenceSpeed = 3;
+let maxSensitivityDecreasePresenceSpeed = 5;
+let minSensitivityIncreasePresenceSpeed = 1;
+let maxSensitivityIncreasePresenceSpeed = 5;
+let minSensitivityDebounceDelay = 1;
+let maxSensitivityDebounceDelay = .1;
+
 let options = null;
 var options1 = {
-  decreasePresenceSpeed: 0.8,
-  increasePresenceSpeed: 2.3,
+  // decreasePresenceSpeed: 0.8,
+  // increasePresenceSpeed: 2.3,
   minPlaybackSpeed: 0.325,
   maxPlaybackSpeed: 1,
   minOverlayOpacity: 0,
   maxOverlayOpacity: 1,
-  presenceDebounceDelay: 0.2
+  set1Sensitivity: .3,
+  // presenceDebounceDelay: 0.2
 };
 for (let id in options1) {
   if (localStorage.getItem(id + "1")) {
@@ -26,13 +37,14 @@ function writeOptions1() {
   }
 }
 var options2 = {
-  decreasePresenceSpeed: 0.8,
-  increasePresenceSpeed: 2.3,
+  // decreasePresenceSpeed: 0.8,
+  // increasePresenceSpeed: 2.3,
   minPlaybackSpeed: 0.325,
   maxPlaybackSpeed: 1,
   minOverlayOpacity: 0,
   maxOverlayOpacity: 1,
-  presenceDebounceDelay: 0.2
+  set2Sensitivity: .3,
+  // presenceDebounceDelay: 0.2
 };
 for (let id in options2) {
   if (localStorage.getItem(id + "2")) {
@@ -47,26 +59,37 @@ function writeOptions2() {
 }
 
 var folder1 = gui.addFolder('set 1 options');
-folder1.add(options1, "increasePresenceSpeed", 0, 10).onChange(writeOptions1);
-folder1.add(options1, "decreasePresenceSpeed", 0, 10).onChange(writeOptions1);
+// folder1.add(options1, "increasePresenceSpeed", 0, 10).onChange(writeOptions1);
+// folder1.add(options1, "decreasePresenceSpeed", 0, 10).onChange(writeOptions1);
 
 folder1.add(options1, "minPlaybackSpeed", 0, 3).onChange(writeOptions1);
 folder1.add(options1, "maxPlaybackSpeed", 0, 3).onChange(writeOptions1);
 folder1.add(options1, "minOverlayOpacity", 0, 1).onChange(writeOptions1);
 folder1.add(options1, "maxOverlayOpacity", 0, 1).onChange(writeOptions1);
 
-folder1.add(options1, "presenceDebounceDelay", 0, 10).onChange(writeOptions1);
+
+// folder1.add(options1, "presenceDebounceDelay", 0, 10).onChange(writeOptions1);
 
 var folder2 = gui.addFolder('set 2 options');
-folder2.add(options2, "increasePresenceSpeed", 0, 10).onChange(writeOptions2);
-folder2.add(options2, "decreasePresenceSpeed", 0, 10).onChange(writeOptions2);
+// folder2.add(options2, "increasePresenceSpeed", 0, 10).onChange(writeOptions2);
+// folder2.add(options2, "decreasePresenceSpeed", 0, 10).onChange(writeOptions2);
 
 folder2.add(options2, "minPlaybackSpeed", 0, 3).onChange(writeOptions2);
 folder2.add(options2, "maxPlaybackSpeed", 0, 3).onChange(writeOptions2);
 folder2.add(options2, "minOverlayOpacity", 0, 1).onChange(writeOptions2);
 folder2.add(options2, "maxOverlayOpacity", 0, 1).onChange(writeOptions2);
 
-folder2.add(options2, "presenceDebounceDelay", 0, 10).onChange(writeOptions2);
+// folder2.add(options2, "presenceDebounceDelay", 0, 10).onChange(writeOptions2);
+
+let fullscreen = {
+  clickToFullscreen: () => {
+    if (initialized)
+        document.getElementById('videos').requestFullscreen()
+  },
+};
+let sens1Gui = gui.add(options1, "set1Sensitivity", 0.01, .999).onChange(writeOptions1);
+let sens2Gui = gui.add(options2, "set2Sensitivity", 0.01, .999).onChange(writeOptions2);
+gui.add(fullscreen, "clickToFullscreen");
 
 function setupInput(id) {
   if (localStorage.getItem(id)) {
@@ -89,6 +112,8 @@ function gotDevices(deviceInfos) {
       option.innerHTML = deviceInfo.label || `camera ${videoSelect.length + 1}`;
       option.onclick = () => {
         options = options1;
+        gui.remove(sens2Gui);
+        folder2.domElement.setAttribute("hidden", true);
         button_callback(deviceInfo.deviceId,
           document.getElementById("v0name1").value,
           document.getElementById("v1name1").value);
@@ -99,6 +124,8 @@ function gotDevices(deviceInfos) {
       option2.innerHTML = deviceInfo.label || `camera ${videoSelect.length + 1}`;
       option2.onclick = () => {
         options = options2;
+        gui.remove(sens1Gui);
+        folder1.domElement.setAttribute("hidden", true);
         button_callback(deviceInfo.deviceId,
           document.getElementById("v0name2").value,
           document.getElementById("v1name2").value);
@@ -118,15 +145,6 @@ navigator.mediaDevices.enumerateDevices().then(gotDevices).catch(handleError);
 
 let initialized = false;
 function button_callback(deviceId, v0name, v1name) {
-  if (!initialized) {
-    let fullscreen = {
-      clickToFullscreen: () => {
-        document.getElementById('videos').requestFullscreen()
-      },
-    };
-    gui.add(fullscreen, "clickToFullscreen");
-  }
-
   picoSetup(deviceId);
 
   let videoContainer = document.getElementById("videos");
@@ -153,13 +171,27 @@ let currentPresence = 0;
 let presenceDebounceCounter = 0;
 
 let previousTime = Date.now();
+function getSensitivity() {
+  if ("set1Sensitivity" in options) return options.set1Sensitivity;
+  if ("set2Sensitivity" in options) return options.set2Sensitivity;
+  return 0;
+}
 
 function updateVideo() {
+  if (v0.paused) {
+    v0.play();
+  console.log("yea");
+  }
+  if (v1.paused) {
+    v1.play();
+    console.log("yea");
+  }
+
   let currentTime = Date.now();
   let dt = (currentTime - previousTime) / 1000;
   previousTime = currentTime;
 
-  if (v0.currentTime - v1.currentTime > .05) {
+  if (v0.currentTime - v1.currentTime > .05 && v0.currentTime > .1 && v1.currentTime > .1) {
     v1.currentTime = v0.currentTime;
   }
   if (typeof dets !== 'undefined') {
@@ -173,16 +205,24 @@ function updateVideo() {
     //   v0.playbackRate = .4;
     //   v1.playbackRate = .4;
     // }
+
+    let presenceDebounceDelay = minSensitivityDebounceDelay + 
+      (maxSensitivityDebounceDelay - minSensitivityDebounceDelay) * getSensitivity();
+    let increasePresenceSpeed = minSensitivityIncreasePresenceSpeed + 
+      (maxSensitivityIncreasePresenceSpeed - minSensitivityIncreasePresenceSpeed) * getSensitivity();
+    let decreasePresenceSpeed = minSensitivityDecreasePresenceSpeed + 
+      (maxSensitivityDecreasePresenceSpeed - minSensitivityDecreasePresenceSpeed) * getSensitivity();
+
     if (dets.length > 0) {
-      presenceDebounceCounter = options.presenceDebounceDelay;
+      presenceDebounceCounter = presenceDebounceDelay;
     } else if (presenceDebounceCounter > 0) {
       presenceDebounceCounter -= dt;
     }
 
     if (presenceDebounceCounter > 0) {
-      currentPresence += dt * options.increasePresenceSpeed;
+      currentPresence += dt * increasePresenceSpeed;
     } else {
-      currentPresence -= dt * options.decreasePresenceSpeed;
+      currentPresence -= dt * decreasePresenceSpeed;
     }
     currentPresence = Math.min(currentPresence, 1);
     currentPresence = Math.max(currentPresence, 0);

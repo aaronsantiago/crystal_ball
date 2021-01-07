@@ -13,6 +13,7 @@ canvas {
 	position: absolute;
 	right: 0;
 	bottom: 0;
+	pointer-events: none;
 }
 
 details {
@@ -35,6 +36,10 @@ details {
 	position: absolute;
 	top: 0;
 	right: 0;
+}
+
+#videos {
+	pointer-events: none;
 }
 
 .cb_video {

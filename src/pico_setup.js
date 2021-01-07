@@ -59,8 +59,13 @@ function picoSetup (deviceId) {
     /*
     (4) this function is called each time a video frame becomes available
      */
+    let detectionFramerate = 10;
+    let detectionCounter = 0;
     var processfn = function (video, dt)
     {
+        detectionCounter += dt/1000;
+        if (detectionCounter < 1/detectionFramerate) return;
+        detectionCounter -= 1/detectionFramerate;
         // render the video frame to the canvas element and extract RGBA pixel data
         ctx.drawImage(video, 0, 0);
         var rgba = ctx.getImageData(0, 0, 640, 480).data;
