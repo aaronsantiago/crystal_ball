@@ -57,38 +57,43 @@ function writeOptions2() {
     localStorage.setItem(id + "2", options2[id]);
   }
 }
+// var folder1 = null;
+if (tab1) {
+  // folder1 = gui.addFolder('set 1 options');
+  // folder1.add(options1, "increasePresenceSpeed", 0, 10).onChange(writeOptions1);
+  // folder1.add(options1, "decreasePresenceSpeed", 0, 10).onChange(writeOptions1);
 
-var folder1 = gui.addFolder('set 1 options');
-// folder1.add(options1, "increasePresenceSpeed", 0, 10).onChange(writeOptions1);
-// folder1.add(options1, "decreasePresenceSpeed", 0, 10).onChange(writeOptions1);
-
-folder1.add(options1, "minPlaybackSpeed", 0, 3).onChange(writeOptions1);
-folder1.add(options1, "maxPlaybackSpeed", 0, 3).onChange(writeOptions1);
-folder1.add(options1, "minOverlayOpacity", 0, 1).onChange(writeOptions1);
-folder1.add(options1, "maxOverlayOpacity", 0, 1).onChange(writeOptions1);
+  gui.add(options1, "minPlaybackSpeed", 0, 3).onChange(writeOptions1);
+  gui.add(options1, "maxPlaybackSpeed", 0, 3).onChange(writeOptions1);
+  gui.add(options1, "minOverlayOpacity", 0, 1).onChange(writeOptions1);
+  gui.add(options1, "maxOverlayOpacity", 0, 1).onChange(writeOptions1);
+}
 
 
 // folder1.add(options1, "presenceDebounceDelay", 0, 10).onChange(writeOptions1);
+// var folder2 = null;
+if (tab2) {
+  folder2 = gui.addFolder('set 2 options');
+  // folder2.add(options2, "increasePresenceSpeed", 0, 10).onChange(writeOptions2);
+  // folder2.add(options2, "decreasePresenceSpeed", 0, 10).onChange(writeOptions2);
 
-var folder2 = gui.addFolder('set 2 options');
-// folder2.add(options2, "increasePresenceSpeed", 0, 10).onChange(writeOptions2);
-// folder2.add(options2, "decreasePresenceSpeed", 0, 10).onChange(writeOptions2);
-
-folder2.add(options2, "minPlaybackSpeed", 0, 3).onChange(writeOptions2);
-folder2.add(options2, "maxPlaybackSpeed", 0, 3).onChange(writeOptions2);
-folder2.add(options2, "minOverlayOpacity", 0, 1).onChange(writeOptions2);
-folder2.add(options2, "maxOverlayOpacity", 0, 1).onChange(writeOptions2);
+  gui.add(options2, "minPlaybackSpeed", 0, 3).onChange(writeOptions2);
+  gui.add(options2, "maxPlaybackSpeed", 0, 3).onChange(writeOptions2);
+  gui.add(options2, "minOverlayOpacity", 0, 1).onChange(writeOptions2);
+  gui.add(options2, "maxOverlayOpacity", 0, 1).onChange(writeOptions2);
+}
 
 // folder2.add(options2, "presenceDebounceDelay", 0, 10).onChange(writeOptions2);
 
 let fullscreen = {
   clickToFullscreen: () => {
-    if (initialized)
-        document.getElementById('videos').requestFullscreen()
+    if (initialized) {
+        document.getElementById('videos').requestFullscreen();
+      }
   },
 };
-let sens1Gui = gui.add(options1, "set1Sensitivity", 0.01, .999).onChange(writeOptions1);
-let sens2Gui = gui.add(options2, "set2Sensitivity", 0.01, .999).onChange(writeOptions2);
+if (tab1) let sens1Gui = gui.add(options1, "set1Sensitivity", 0.01, .999).onChange(writeOptions1);
+if (tab2) let sens2Gui = gui.add(options2, "set2Sensitivity", 0.01, .999).onChange(writeOptions2);
 gui.add(fullscreen, "clickToFullscreen");
 
 function setupInput(id) {
@@ -100,7 +105,10 @@ function setupInput(id) {
   });
 }
 
-for (let v of['v0name1', 'v1name1', 'v0name2', 'v1name2']) {
+let inputs = [];
+if (tab1) inputs = ['v0name1', 'v1name1'];
+if (tab2) inputs = ['v0name2', 'v1name2'];
+for (let v of inputs) {
   setupInput(v);
 }
 
@@ -108,29 +116,29 @@ function gotDevices(deviceInfos) {
   for (let i = 0; i !== deviceInfos.length; ++i) {
     const deviceInfo = deviceInfos[i];
     if (deviceInfo.kind === 'videoinput') {
-      const option = document.createElement('button');
-      option.innerHTML = deviceInfo.label || `camera ${videoSelect.length + 1}`;
-      option.onclick = () => {
-        options = options1;
-        gui.remove(sens2Gui);
-        folder2.domElement.setAttribute("hidden", true);
-        button_callback(deviceInfo.deviceId,
-          document.getElementById("v0name1").value,
-          document.getElementById("v1name1").value);
-      };
-      document.getElementById("options").appendChild(option);
+      if (tab1) {
+        const option = document.createElement('button');
+        option.innerHTML = deviceInfo.label || `camera ${videoSelect.length + 1}`;
+        option.onclick = () => {
+          options = options1;
+          button_callback(deviceInfo.deviceId,
+            document.getElementById("v0name1").value,
+            document.getElementById("v1name1").value);
+        };
+        document.getElementById("options").appendChild(option);
+      }
 
-      const option2 = document.createElement('button');
-      option2.innerHTML = deviceInfo.label || `camera ${videoSelect.length + 1}`;
-      option2.onclick = () => {
-        options = options2;
-        gui.remove(sens1Gui);
-        folder1.domElement.setAttribute("hidden", true);
-        button_callback(deviceInfo.deviceId,
-          document.getElementById("v0name2").value,
-          document.getElementById("v1name2").value);
-      };
-      document.getElementById("options2").appendChild(option2);
+      if (tab2) {
+        const option2 = document.createElement('button');
+        option2.innerHTML = deviceInfo.label || `camera ${videoSelect.length + 1}`;
+        option2.onclick = () => {
+          options = options2;
+          button_callback(deviceInfo.deviceId,
+            document.getElementById("v0name2").value,
+            document.getElementById("v1name2").value);
+        };
+        document.getElementById("options2").appendChild(option2);
+      }
     } else {
       console.log('Some other kind of source/device: ', deviceInfo);
     }
@@ -150,11 +158,11 @@ function button_callback(deviceId, v0name, v1name) {
   let videoContainer = document.getElementById("videos");
 
   v0 = document.createElement("VIDEO");
-  v0.setAttribute("src", "videos/" + v0name);
+  v0.setAttribute("src", "/videos/" + v0name);
   v0.setAttribute("id", "video0");
 
   v1 = document.createElement("VIDEO");
-  v1.setAttribute("src", "videos/" + v1name);
+  v1.setAttribute("src", "/videos/" + v1name);
   v1.setAttribute("id", "video1");
 
   for (let v of[v0, v1]) {
@@ -232,5 +240,7 @@ function updateVideo() {
     v1.style.opacity = (options.minOverlayOpacity + (options.maxOverlayOpacity - options.minOverlayOpacity) * currentPresence);
   }
 
+
   requestAnimationFrame(updateVideo);
 }
+
