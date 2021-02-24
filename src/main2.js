@@ -19,10 +19,11 @@ let maxSensitivityDebounceDelay = .1;
 var options = {
   // decreasePresenceSpeed: 0.8,
   // increasePresenceSpeed: 2.3,
-  minPlaybackSpeed: 1,
-  faceSensitivity: .3,
-  motionSensitivity: .3,
-  motionPlaybackSpeed: 2.5,
+  minPlaybackSpeed: .7,
+  maxPlaybackSpeed: 2,
+  minOverlayOpacity: 0,
+  maxOverlayOpacity: 1,
+  sensitivity: .3,
   // presenceDebounceDelay: 0.2
 };
 // for (let id in options1) {
@@ -88,17 +89,9 @@ let fullscreen = {
       }
   },
 };
-if (tab1) {
-  gui.add(options, "faceSensitivity", 0.01, .999).onChange(() => {
-      localStorage.setItem("faceSensitivity", options["faceSensitivity"]);
-    });
-  gui.add(options, "motionSensitivity", 0.01, .999).onChange(() => {
-      localStorage.setItem("motionSensitivity", options["motionSensitivity"]);
-    });
-  gui.add(options, "motionPlaybackSpeed", 1.001, 2.999).onChange(() => {
-      localStorage.setItem("motionPlaybackSpeed", options["motionPlaybackSpeed"]);
-    });
-}
+if (tab1) gui.add(options, "sensitivity", 0.01, .999).onChange(() => {
+  localStorage.setItem(sensitivity, options["sensitivity"]);
+});
 gui.add(fullscreen, "clickToFullscreen");
 
 // function setupInput(id) {
@@ -158,43 +151,30 @@ else {
 
 let scoreBuffer = 0;
 let scoreBuffer2 = 0;
-let score = 0;
-let score2 = 0;
-let mag = (x, y) => {return Math.sqrt((x - y) * (x - y));};
 function button_callback(deviceId, v0name, v1name) {
   picoSetup(deviceId);
 
   let videoContainer = document.getElementById("videos");
-  webCamFlow = new oflow.VideoFlow(mycamvas.video, 8);
+  webCamFlow = new oflow.WebCamFlow(mycamvas.video, 4);
 
   webCamFlow.onCalculated( function (direction) {
       // render zones
-      let totX = 0;
-      let totY = 0;
+
+      let score = 0;
       for(var i = 0; i < direction.zones.length; ++i) {
           var zone = direction.zones[i];
+          let mag = (x, y) => {return Math.sqrt((x - y) * (x - y));};
           // score += mag(zone.u, zone.v);
-          totX += zone.u;
-          totY += zone.v;
-          score2 += mag(zone.u, zone.v);
-          // score = Math.max(score, mag(zone.u, zone.v));
+          score = Math.max(score, mag(zone.u, zone.v));
           // score += mag(zone.u, zone.v) > .006 ? 1 : 0;
       }
-      score = mag(totX, totY);
-      // score = score / 25;
-      score2 = score2 / direction.zones.length;
+      // score = score / direction.zones.length;
+      score = score / 10;
+      score = score / 10;
+      scoreBuffer = (score * .5 + scoreBuffer * .5);
+      document.getElementById("score").innerHTML = scoreBuffer;
       
   });
-  let updateScore = () => {
-      let scoreEl = document.getElementById("score");
-      if (scoreEl) scoreEl.innerHTML = scoreBuffer;
-      let score2El = document.getElementById("score2");
-      if (score2El) score2El.innerHTML = scoreBuffer2;
-      scoreBuffer = (score * .5 + scoreBuffer * .5);
-      scoreBuffer2 = (score2 * .5 + scoreBuffer2 * .5);
-      setTimeout(updateScore, 100);
-  };
-  setTimeout(updateScore, 100);
 
   webCamFlow.startCapture();
 
@@ -220,8 +200,8 @@ let currentPresence = 0;
 let presenceDebounceCounter = 0;
 
 let previousTime = Date.now();
-function getFaceSensitivity() {
-  return options.faceSensitivity;
+function getSensitivity() {
+  return options.sensitivity;
 }
 
 function updateVideo() {
@@ -255,11 +235,11 @@ function updateVideo() {
     // }
 
     let presenceDebounceDelay = minSensitivityDebounceDelay + 
-      (maxSensitivityDebounceDelay - minSensitivityDebounceDelay) * getFaceSensitivity();
+      (maxSensitivityDebounceDelay - minSensitivityDebounceDelay) * getSensitivity();
     let increasePresenceSpeed = minSensitivityIncreasePresenceSpeed + 
-      (maxSensitivityIncreasePresenceSpeed - minSensitivityIncreasePresenceSpeed) * getFaceSensitivity();
+      (maxSensitivityIncreasePresenceSpeed - minSensitivityIncreasePresenceSpeed) * getSensitivity();
     let decreasePresenceSpeed = minSensitivityDecreasePresenceSpeed + 
-      (maxSensitivityDecreasePresenceSpeed - minSensitivityDecreasePresenceSpeed) * getFaceSensitivity();
+      (maxSensitivityDecreasePresenceSpeed - minSensitivityDecreasePresenceSpeed) * getSensitivity();
 
     if (confDets.length > 0) {
       presenceDebounceCounter = presenceDebounceDelay;
@@ -274,13 +254,10 @@ function updateVideo() {
     }
     currentPresence = Math.min(currentPresence, 1);
     currentPresence = Math.max(currentPresence, 0);
-    let speed = 
-    // let speed = scoreBuffer2 < .1 ? options.minPlaybackSpeed :
-     // (scoreBuffer > 100 ? (options.motionPlaybackSpeed * Math.min(1.3, Math.max(scoreBuffer/100, 1))) : options.minPlaybackSpeed);
-     (scoreBuffer2 > (1 - options.motionSensitivity) ? (options.motionPlaybackSpeed * Math.min(1.3, Math.max(scoreBuffer2, 1))) : 1);
-    v0.playbackRate = v1.playbackRate = speed;
-    v0.playbackRate = v1.playbackRate = speed;
-    v1.style.opacity = currentPresence;
+
+    v0.playbackRate = v1.playbackRate = scoreBuffer > .6 ? (options.maxPlaybackSpeed * Math.min(1.3, Math.max(scoreBuffer, 1))) : options.minPlaybackSpeed;
+    v0.playbackRate = v1.playbackRate = scoreBuffer > .6 ? (options.maxPlaybackSpeed * Math.min(1.3, Math.max(scoreBuffer, 1))) : options.minPlaybackSpeed;
+    v1.style.opacity = (options.minOverlayOpacity + (options.maxOverlayOpacity - options.minOverlayOpacity) * currentPresence);
   }
 
 
