@@ -200,7 +200,8 @@ function updateVideo() {
   }
 
   // if the debounce is still ticking down, pretend we still see a face
-  if (presenceDebounceCounter > 0) {
+  // we also allow movement to trigger the item
+  if (presenceDebounceCounter > 0 || playbackSpeedBuffer > 1) {
     currentPresence += dt * increasePresenceSpeed;
   // once it's 0 we can safely say there is no face
   } else {
