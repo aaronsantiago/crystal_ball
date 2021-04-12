@@ -27,7 +27,14 @@ var options = {
   motionSensitivity: .3,
   minSpeed: .7,
   maxSpeed: 1.2,
+  autostart: false,
 };
+
+for (let option in options) {
+  if (localStorage.getItem(option) !== null) {
+    options[option] = localStorage.getItem(option);
+  }
+}
 
 // ************ page load setup *****************************************
 navigator.mediaDevices.getUserMedia({
@@ -47,6 +54,9 @@ gui.add(options, "minSpeed", 0.01, .999).onChange(() => {
 gui.add(options, "maxSpeed", 1.001, 2.999).onChange(() => {
     localStorage.setItem("maxSpeed", options["maxSpeed"]);
   });
+gui.add(options, "autostart").onChange(() => {
+    localStorage.setItem("autostart", options["autostart"]);
+  });
 let fullscreen = {
   clickToFullscreen: () => {
     if (initialized) {
@@ -54,6 +64,11 @@ let fullscreen = {
       }
   },
 };
+document.body.onkeyup = function(e){
+    if(e.keyCode == 32){
+        fullscreen.clickToFullscreen();
+    }
+}
 gui.add(fullscreen, "clickToFullscreen");
 
 // getUserMedia setup
@@ -66,11 +81,17 @@ function gotDevices(deviceInfos) {
       const option = document.createElement('button');
       option.innerHTML = deviceInfo.label || `camera ${videoSelect.length + 1}`;
       option.onclick = () => {
+        localStorage.setItem("videoInput", option.innerHTML);
+
         document.getElementById("cambuttons").setAttribute("hidden", "true");
         button_callback(deviceInfo.deviceId,
           vname1,
           vname2);
       };
+      if (options.autostart && localStorage.getItem("videoInput") == option.innerHTML) {
+        option.onclick();
+        fullscreen.clickToFullscreen();
+      }
       document.getElementById("cambuttons").appendChild(option);
       console.log(deviceInfo.label + " " + deviceInfo.deviceId);
     } else {
@@ -107,8 +128,8 @@ else {
 // helper function to calculate magnitude of coordinates
 let mag = (x, y) => {return Math.sqrt((x - y) * (x - y));};
 function button_callback(deviceId, v0name, v1name) {
-
-  // run face detection setup
+    // run face detection setup
+  
   picoSetup(deviceId);
 
   // run optical flow setup
