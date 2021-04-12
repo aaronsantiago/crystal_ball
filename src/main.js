@@ -23,6 +23,7 @@ let playbackSpeedDecreaseSpeed = 1;
 
 // options that can be changed via the UI
 var options = {
+  eyeRecognition: false,
   faceSensitivity: .3,
   motionSensitivity: .3,
   minSpeed: .7,
@@ -32,7 +33,11 @@ var options = {
 
 for (let option in options) {
   if (localStorage.getItem(option) !== null) {
-    options[option] = localStorage.getItem(option);
+    if (option == "autostart" || option == "eyeRecognition") {
+      options[option] = localStorage.getItem(option) === "true";
+    } else {
+      options[option] = parseFloat(localStorage.getItem(option));
+    }
   }
 }
 
@@ -42,6 +47,9 @@ navigator.mediaDevices.getUserMedia({
 });
 
 // dat.gui setup
+gui.add(options, "eyeRecognition").onChange(() => {
+    localStorage.setItem("eyeRecognition", options["eyeRecognition"]);
+  });
 gui.add(options, "faceSensitivity", 0.01, .999).onChange(() => {
     localStorage.setItem("faceSensitivity", options["faceSensitivity"]);
   });
@@ -61,6 +69,7 @@ let fullscreen = {
   clickToFullscreen: () => {
     if (initialized) {
         document.getElementById('videos').requestFullscreen();
+        document.getElementById('videos').style.cursor = "cursor: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAZdEVYdFNvZnR3YXJlAFBhaW50Lk5FVCB2My41LjbQg61aAAAADUlEQVQYV2P4//8/IwAI/QL/+TZZdwAAAABJRU5ErkJggg=='), url(images/blank.cur), none;";
       }
   },
 };
@@ -88,7 +97,7 @@ function gotDevices(deviceInfos) {
           vname1,
           vname2);
       };
-      if (options.autostart && localStorage.getItem("videoInput") == option.innerHTML) {
+      if ((options.autostart === true || options.autostart === "true") && localStorage.getItem("videoInput") == option.innerHTML) {
         option.onclick();
         fullscreen.clickToFullscreen();
       }
@@ -217,7 +226,7 @@ function updateVideo() {
     (maxSensitivityDecreasePresenceSpeed - minSensitivityDecreasePresenceSpeed) * options.faceSensitivity;
 
   // confDets is defined by pico--represents the number of faces detected
-  if (!(typeof confDets === "undefined") && confDets.length > 0) {
+  if (!(typeof confDets === "undefined") && confDets.length > 0 && options.eyeRecognition) {
     presenceDebounceCounter = presenceDebounceDelay;
   } else if (presenceDebounceCounter > 0) {
     presenceDebounceCounter -= dt;
