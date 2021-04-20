@@ -108,7 +108,7 @@ function gotDevices(deviceInfos) {
           vname1,
           vname2);
       };
-      if ((options.autostart === true || options.autostart === "true") && localStorage.getItem("videoInput") == option.innerHTML) {
+      if ((options.autostart === true || options.autostart === "true") && lsGet("videoInput") == option.innerHTML) {
         option.onclick();
         fullscreen.clickToFullscreen();
       }
