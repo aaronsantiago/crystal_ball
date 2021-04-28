@@ -30,10 +30,10 @@ let oflowMotionAmountBuffer = 0;
 let oflowMotionAmount = 0;
 
 let playbackSpeedBuffer = 1;
-let playbackSpeedDecreaseSpeed = 1;
 
 // options that can be changed via the UI
 var options = {
+  playbackSpeedDecreaseSpeed: 1,
   eyeRecognition: false,
   faceSensitivity: .3,
   motionSensitivity: .3,
@@ -66,6 +66,9 @@ gui.add(options, "faceSensitivity", 0.01, .999).onChange(() => {
   });
 gui.add(options, "motionSensitivity", 0.01, .999).onChange(() => {
     lsSet("motionSensitivity", options["motionSensitivity"]);
+  });
+gui.add(options, "playbackSpeedDecreaseSpeed", 0.01, .999).onChange(() => {
+    lsSet("playbackSpeedDecreaseSpeed", options["playbackSpeedDecreaseSpeed"]);
   });
 gui.add(options, "minSpeed", 0.01, .999).onChange(() => {
     lsSet("minSpeed", options["minSpeed"]);
@@ -266,7 +269,7 @@ function updateVideo() {
     playbackSpeedBuffer = speed;
   }
   else {
-    playbackSpeedBuffer -= dt * playbackSpeedDecreaseSpeed;
+    playbackSpeedBuffer -= dt * options.playbackSpeedDecreaseSpeed;
     playbackSpeedBuffer = Math.max(playbackSpeedBuffer, options.minSpeed);
   }
   v0.playbackRate = v1.playbackRate = playbackSpeedBuffer;
