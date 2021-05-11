@@ -101,6 +101,7 @@ gui.add(fullscreen, "clickToFullscreen");
 
 // getUserMedia success callback
 function gotDevices(deviceInfos) {
+  let autostarted = false;
   for (let i = 0; i !== deviceInfos.length; ++i) {
     const deviceInfo = deviceInfos[i];
     if (deviceInfo.kind === 'videoinput') {
@@ -114,12 +115,13 @@ function gotDevices(deviceInfos) {
           vname1,
           vname2);
       };
-      if ((options.autostart === true || options.autostart === "true")) {
+      if (!autostarted && (options.autostart === true || options.autostart === "true")) {
         if (lsGet("videoInput") == option.innerHTML
            || i == deviceInfos.length - 1) { // we're autostart but we didn't find a camera!
           option.onclick();
           fullscreen.clickToFullscreen();
           setInterval(() => {if (options.autostart === true) {try{fullscreen.clickToFullscreen();}catch(e){}}}, 1000);
+          autostarted = true;
         }
       }
       document.getElementById("cambuttons").appendChild(option);
