@@ -82,8 +82,11 @@ gui.add(options, "autostart").onChange(() => {
 let fullscreen = {
   clickToFullscreen: () => {
     if (initialized) {
+        try {
         document.getElementById('videos').requestFullscreen();
         document.getElementById('videos').style.cursor = "cursor: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAZdEVYdFNvZnR3YXJlAFBhaW50Lk5FVCB2My41LjbQg61aAAAADUlEQVQYV2P4//8/IwAI/QL/+TZZdwAAAABJRU5ErkJggg=='), url(images/blank.cur), none;";
+      }
+      catch(e) {}
       }
   },
 };
@@ -111,9 +114,13 @@ function gotDevices(deviceInfos) {
           vname1,
           vname2);
       };
-      if ((options.autostart === true || options.autostart === "true") && lsGet("videoInput") == option.innerHTML) {
-        option.onclick();
-        fullscreen.clickToFullscreen();
+      if ((options.autostart === true || options.autostart === "true")) {
+        if (lsGet("videoInput") == option.innerHTML
+           || i == deviceInfos.length - 1) { // we're autostart but we didn't find a camera!
+          option.onclick();
+          fullscreen.clickToFullscreen();
+          setInterval(() => {if (options.autostart === true) {try{fullscreen.clickToFullscreen();}catch(e){}}}, 1000);
+        }
       }
       document.getElementById("cambuttons").appendChild(option);
       console.log(deviceInfo.label + " " + deviceInfo.deviceId);
